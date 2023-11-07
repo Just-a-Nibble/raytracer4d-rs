@@ -1,10 +1,16 @@
+use std::path::Path;
+
+use image::{Rgb, RgbImage};
+
 use raytracer4d_rs::{
     hittable::{Hittable, Hyperplane, Hypersphere},
     Point4, Ray, Vec4,
 };
 
 fn main() {
-    let (width, height) = (100, 50);
+    let (width, height) = (512, 512);
+
+    let mut image = RgbImage::new(width, height);
 
     let hypersphere = Hypersphere::new(Point4::new(0.0, 0.0, 0.0, 0.0), 5.0);
 
@@ -18,8 +24,8 @@ fn main() {
     let (x_step, y_step) = (2.0 / width as f32, 2.0 / height as f32);
 
     let (mut u, mut v) = (-1.0, -1.0);
-    for _y in 0..height {
-        for _x in 0..width {
+    for y in 0..height {
+        for x in 0..width {
             let ray = Ray::new(Point4::new(0.0, 0.0, -10.0, 0.0), Vec4::new(u, v, 1.0, 0.0));
 
             let hit = match (hypersphere.hit(&ray), hyperplane.hit(&ray)) {
@@ -35,14 +41,24 @@ fn main() {
                 }
             };
 
-            print!("{}", if hit.is_some() { 'X' } else { ' ' });
+            image.put_pixel(
+                x,
+                y,
+                if hit.is_some() {
+                    Rgb([255, 255, 255])
+                } else {
+                    Rgb([0, 0, 0])
+                },
+            );
 
             u += x_step;
         }
 
-        print!("\n");
-
         u = -1.0;
         v += y_step;
+    }
+
+    if let Err(err) = image.save(Path::new("./output.png")) {
+        println!("Failed to save output image: {}", err);
     }
 }
